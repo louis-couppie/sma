@@ -1,16 +1,13 @@
 import random
-from pygame.math import Vector2
 import core
-from agario.agent import Agent
-from agario.creep import Creep
-from agario.obstacle import Obstacle
+from pygame.math import Vector2
+from sma.agent import Agent
 
 
 def computePerception(agent):
-    listeEntite = core.memory("agents") + core.memory("creeps") + core.memory("obstacles")
     agent.listePerception = []
-    for entite in listeEntite:
-        if agent.body.fustrum.inside(entite) and agent.uuid != entite.uuid:
+    for entite in core.memory("agents"):
+        if agent.body.fustrum.inside(entite.body) and agent.uuid != entite.uuid:
             agent.listePerception.append(entite)
 
 
@@ -32,27 +29,24 @@ def addRandomEntity(self):
         core.memory("obstacles").append(Obstacle())
 
 def updateEnv():
+    infectes = []
     for a in core.memory("agents"):
-        for c in core.memory("creeps"):
-            if a.body.position.distance_to(c.position) <= a.body.mass:
-                c.position = Vector2(random.randint(0, core.WINDOW_SIZE[0]),
-                                     random.randint(0, core.WINDOW_SIZE[1]))
-                c.color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-                a.body.mass += 1
+        if a.statut == "I":
+            infectes.append(a)
+    for i in infectes:
+        i.body.update()
 
-        for o in core.memory("obstacles"):
-            if a.body.position.distance_to(o.position) <= a.body.mass:
-                core.memory("agents").remove(a)
+def contamination(pos_souris):
+    pos = Vector2(pos_souris[0], pos_souris[1])
+    dmin = 99999999
+    infecte = None
+    for agent in core.memory("agents"):
+        dist = agent.body.position.distance_to(pos)
+        if dmin > dist:
+            dmin = dist
+            infecte = agent
+    infecte.statut = "I"
 
-        for b in core.memory("agents"):
-            if b.uuid != a.uuid:
-                if a.body.position.distance_to(b.body.position) <= a.body.mass + b.body.mass:
-                    if a.body.mass < b.body.mass:
-                        b.body.mass += a.body.mass / 2
-                        core.memory("agents").remove(a)
-                    else:
-                        a.body.mass += b.body.mass / 2
-                        core.memory("agents").remove(b)
 
 
 def setup():
@@ -61,15 +55,9 @@ def setup():
     core.WINDOW_SIZE = [800, 600]
 
     core.memory("agents", [])
-    core.memory("creeps", [])
-    core.memory("obstacles", [])
 
-    for i in range(0, 5):
+    for i in range(0, 200):
         core.memory("agents").append(Agent())
-    for i in range(0, 50):
-        core.memory("creeps").append(Creep())
-    for i in range(0, 3):
-        core.memory("obstacles").append(Obstacle())
 
     print("Setup END-----------")
 
@@ -77,15 +65,12 @@ def setup():
 def run():
     core.cleanScreen()
 
+    if core.getMouseLeftClick():
+        contamination(core.getMouseLeftClick())
+
     # Display
     for agent in core.memory("agents"):
         agent.show()
-
-    for creep in core.memory("creeps"):
-        creep.show()
-
-    for obstacle in core.memory("obstacles"):
-        obstacle.show()
 
     for agent in core.memory("agents"):
         computePerception(agent)

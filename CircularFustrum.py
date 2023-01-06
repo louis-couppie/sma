@@ -1,7 +1,6 @@
 from pygame.math import Vector2
 
 
-
 class CircularFustrum:
     def __init__(self, parent=None, r=100):
         self.parent = parent

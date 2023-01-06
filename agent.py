@@ -1,65 +1,36 @@
 import random
+import core
 from pygame.math import Vector2
-from agario.body import Body
-from agario.creep import Creep
+from sma.body import Body
 
 
 class Agent:
     def __init__(self):
-        self.body = Body()
+        self.body = Body(self)
         self.listePerception = []
         self.uuid = random.randint(100000000, 999999999999999)
         self.decision = Vector2()
 
+        self.statut = "S"
+        self.est_contagieux = False
+        self.est_mourant = False
+        self.symptome = False
+
     def filtre_perception(self):
-        creeps = []
-        obstacles = []
-        proies = []
-        predateurs = []
-        for entite in self.listePerception:
-            if isinstance(entite, Agent):
-                if entite.body.mass > self.body.mass:
-                    predateurs.append(entite)
-                else:
-                    proies.append(entite)
-            elif isinstance(entite, Creep):
-                creeps.append(entite)
-            else:
-                obstacles.append(entite)
-        return proies, predateurs, obstacles, creeps
+        listeInfectee = []
+        for a in self.listePerception:
+            if a.statut == "I" and a.symptome:
+                listeInfectee.append(a)
+        return listeInfectee
+
 
     def update(self):
-        proies, predateurs, obstacles, creeps = self.filtre_perception()
-
-        if proies == [] and predateurs == [] and obstacles == [] and creeps == []:
-            self.decision = Vector2(random.randint(-2, 2), random.randint(-2, 2))
-            return
-
-        res = Vector2(0, 0)
-        for creep in creeps:
-            pass
-        for proie in proies:
-            pass
-        for obstacle in obstacles:
-            pass
-        for pred in predateurs:
-            pass
-        self.decision = Vector2(random.randint(-2, 2), random.randint(-2, 2))
-
-
-        # for E in aEviter:
-        #     if isinstance(E, Agent):
-        #         res += self.body.position - E.body.position
-        #     else:
-        #        res += self.body.position - E.position
-        # for M in aManger:
-        #     if isinstance(M, Agent):
-        #        res += M.body.position - self.body.position
-        #    else:
-        #        res += M.position - self.body.position
-        # if len(aManger) != 0 or len(aEviter) != 0:
-        #    res /= len(aManger) + len(aEviter)
-        # self.decision = res
+        self.decision = Vector2(random.randint(-3, 3), random.randint(-3, 3)) # Comportement aléatoire
 
     def show(self):
-        self.body.draw()
+        if self.statut == "S":
+            core.Draw.circle((0, 0, 255), self.body.position, 5)
+        elif self.statut == "I":
+            core.Draw.circle((255, 0, 0), self.body.position, 5)
+        elif self.statut == "R":
+            core.Draw.circle((0, 255, 0), self.body.position, 5)
